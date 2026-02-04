@@ -11,3 +11,5 @@ apscheduler
 python-dotenv
 openai
 tzlocal
+pytest
+ruff
