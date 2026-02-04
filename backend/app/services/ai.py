@@ -20,13 +20,25 @@ class AIService:
             )
 
         # Use the official OpenAI SDK for better compatibility
+        base_url = api_base.rstrip("/")
+        
+        if not base_url.startswith(("http://", "https://")):
+            return f"AI 总结出错: API Base URL 必须以 http:// 或 https:// 开头。当前值: {api_base}"
+
+        # Security/Config Check: If running in Docker and using localhost, it will likely fail
+        # This is a common pitfall for users using local LLMs like Ollama
+        if "localhost" in base_url or "127.0.0.1" in base_url:
+            print(f"WARNING: AI API Base URL contains 'localhost' or '127.0.0.1': {base_url}")
+            print("If you are running in Docker, this will refer to the container itself, not the host.")
+
         client = AsyncOpenAI(
             api_key=api_key,
-            base_url=api_base.rstrip("/"),
+            base_url=base_url,
             # Use our managed httpx client to reuse connections
             http_client=HttpClientManager.get_client()
         )
 
+        print(f"DEBUG: AI Request - Base: {api_base}, Model: {model}")
         try:
             response = await client.chat.completions.create(
                 model=model,
@@ -53,5 +65,16 @@ class AIService:
 
         except Exception as e:
             import traceback
+            import httpx
             error_details = traceback.format_exc()
-            return f"AI 总结出错: {str(e)}\n详情: {error_details[:200]}"
+            
+            # Special handling for common httpx errors to make them more readable
+            error_msg = str(e)
+            if isinstance(e, httpx.ConnectError):
+                error_msg = f"网络连接失败，请检查 API Base URL 是否正确且可访问。详情: {error_msg}"
+            elif isinstance(e, httpx.TimeoutException):
+                error_msg = f"请求超时，模型响应过慢或网络不通。详情: {error_msg}"
+            elif isinstance(e, httpx.HTTPStatusError):
+                error_msg = f"API 返回了错误状态码: {e.response.status_code}。内容: {e.response.text}"
+            
+            return f"AI 总结出错: {error_msg}\n详情: {error_details[:300]}"
