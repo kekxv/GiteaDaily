@@ -67,3 +67,7 @@ pnpm dev
 ## 🤝 贡献与反馈
 
 欢迎提交 Issue 或 Pull Request 来改进本项目！
+
+## 📄 开源协议
+
+本项目采用 [MIT License](LICENSE) 开源协议。
