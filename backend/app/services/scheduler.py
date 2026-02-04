@@ -160,13 +160,18 @@ class SchedulerService:
             status = "success" if success else "failed"
             summary = f"执行完成：共统计到 {total_commits} 个提交" if success else "推送 Webhook 失败"
             
+            def datetime_handler(x):
+                if isinstance(x, datetime):
+                    return x.isoformat()
+                raise TypeError("Unknown type")
+
             log = db.query(TaskLog).filter(TaskLog.id == log_id).first()
             if log:
                 log.status = status
                 log.commit_count = total_commits
                 log.summary = summary
                 log.log_details = markdown_report[:5000]
-                log.raw_data = json.dumps(raw_data_obj, ensure_ascii=False)
+                log.raw_data = json.dumps(raw_data_obj, default=datetime_handler, ensure_ascii=False)
                 db.commit()
             
         except Exception as e:
