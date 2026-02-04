@@ -38,10 +38,10 @@ Gitea Daily Reporter 是一款为团队和个人设计的自动化日报工具�
 #### 后端
 ```bash
 cd backend
-python -m venv .venv
+uv venv
 source .venv/bin/activate  # Windows 使用 .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+uv pip install -r requirements.txt
+uv run uvicorn app.main:app --reload
 ```
 
 #### 前端

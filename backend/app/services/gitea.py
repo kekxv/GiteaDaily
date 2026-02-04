@@ -40,7 +40,7 @@ class GiteaService:
             page += 1
         return repos
 
-    async def get_user_activities(self, username: str, since: datetime) -> List[Dict[str, Any]]:
+    async def get_user_activities(self, username: str, since: datetime, user_id: int = None) -> List[Dict[str, Any]]:
         activities = []
         page = 1
         client = HttpClientManager.get_client()
@@ -58,6 +58,10 @@ class GiteaService:
             
             finished = False
             for act in data:
+                # If user_id is provided, verify it matches act_user_id
+                if user_id and act.get("act_user_id") != user_id:
+                    continue
+
                 # Parse Gitea time and convert to same aware timezone for comparison
                 created = datetime.fromisoformat(act["created"].replace("Z", "+00:00")).astimezone(since.tzinfo)
                 if created < since:

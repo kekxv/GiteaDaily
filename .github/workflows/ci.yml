@@ -12,26 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
+          enable-cache: true
+          
+      - name: Set up Python
+        run: uv python install 3.11
           
       - name: Install dependencies
         run: |
           cd backend
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          uv pip install -r requirements.txt
           
       - name: Lint with ruff
         run: |
           cd backend
-          ruff check .
+          uv run ruff check .
           
       - name: Run tests with pytest
         run: |
           cd backend
-          pytest
+          uv run pytest
 
   frontend-checks:
     runs-on: ubuntu-latest

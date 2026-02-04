@@ -82,8 +82,9 @@ class SchedulerService:
             if task.scope_type == "user":
                 user_info = await gitea_service.get_my_info()
                 username = user_info.get("login")
+                user_id = user_info.get("id")
                 full_name = user_info.get("full_name") or username
-                activities = await gitea_service.get_user_activities(username, since)
+                activities = await gitea_service.get_user_activities(username, since, user_id=user_id)
                 
                 raw_data_obj["activities"] = activities
                 

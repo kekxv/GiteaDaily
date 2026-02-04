@@ -76,12 +76,22 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
     until = now
 
     markdown_report = ""
+    data_by_repo = {}
     if task_data.scope_type == "user":
         user_info = await gitea_service.get_my_info()
         username = user_info.get("login")
+        user_id = user_info.get("id")
         full_name = user_info.get("full_name") or username
-        activities = await gitea_service.get_user_activities(username, since)
-        markdown_report = gitea_service.generate_activity_report(since, activities, full_name)
+        activities = await gitea_service.get_user_activities(username, since, user_id=user_id)
+        
+        # Group activities by repo for generate_activity_report
+        for act in activities:
+            repo_name = act["repo"]["full_name"]
+            if repo_name not in data_by_repo:
+                data_by_repo[repo_name] = {"activities": [], "detailed_commits": []}
+            data_by_repo[repo_name]["activities"].append(act)
+            
+        markdown_report = gitea_service.generate_activity_report(since, data_by_repo, full_name)
     else:
         repos_to_check = []
         if task_data.scope_type in ["all", "owner"]:
