@@ -32,7 +32,7 @@ const ConfigPage = () => {
       setGiteaConfigs(giteaRes.data);
       setNotifyConfigs(notifyRes.data);
       setAiConfigs(aiRes.data);
-    } catch (error) {
+    } catch (_error) {
       message.error('加载配置失败');
     } finally {
       setLoading(false);
@@ -44,7 +44,7 @@ const ConfigPage = () => {
       const res = await api.post(`/gitea/${id}/test`);
       if (res.data.success) message.success('连接成功');
       else message.error('连接失败');
-    } catch (error) {
+    } catch (_error) {
       message.error('测试失败');
     }
   };
@@ -54,7 +54,7 @@ const ConfigPage = () => {
       const res = await api.post(`/notify/${id}/test`);
       if (res.data.success) message.success('测试消息已发送');
       else message.error('发送失败');
-    } catch (error) {
+    } catch (_error) {
       message.error('测试失败');
     }
   };
@@ -68,7 +68,7 @@ const ConfigPage = () => {
       } else {
         message.error('AI 连接失败: ' + res.data.error);
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('测试出错');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ const ConfigPage = () => {
       await api.delete(`/${type}/${id}`);
       message.success('删除成功');
       fetchConfigs();
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败');
     }
   };
@@ -93,7 +93,7 @@ const ConfigPage = () => {
       setIsGiteaModalOpen(false);
       giteaForm.resetFields();
       fetchConfigs();
-    } catch (error) {
+    } catch (_error) {
       message.error('添加失败');
     } finally {
       setSubmitting(false);
@@ -108,7 +108,7 @@ const ConfigPage = () => {
       setIsNotifyModalOpen(false);
       notifyForm.resetFields();
       fetchConfigs();
-    } catch (error) {
+    } catch (_error) {
       message.error('添加失败');
     } finally {
       setSubmitting(false);
@@ -123,7 +123,7 @@ const ConfigPage = () => {
       setIsAiModalOpen(false);
       aiForm.resetFields();
       fetchConfigs();
-    } catch (error) {
+    } catch (_error) {
       message.error('添加失败');
     } finally {
       setSubmitting(false);

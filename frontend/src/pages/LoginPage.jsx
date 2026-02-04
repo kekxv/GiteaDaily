@@ -20,7 +20,7 @@ const LoginPage = () => {
       setToken(res.data.access_token);
       message.success('登录成功');
       navigate('/');
-    } catch (error) {
+    } catch (_error) {
       message.error('登录失败：用户名或密码错误');
     } finally {
       setLoading(false);
@@ -32,8 +32,8 @@ const LoginPage = () => {
     try {
       await api.post('/auth/register', values);
       message.success('注册成功，请登录');
-    } catch (error) {
-      message.error('注册失败：' + (error.response?.data?.detail || '未知错误'));
+    } catch (_error) {
+      message.error('注册失败：' + (_error.response?.data?.detail || '未知错误'));
     } finally {
       setLoading(false);
     }

@@ -1,11 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 from .database import engine, Base, get_db
 from .services.scheduler import scheduler_service
 from .models import ReportTask
 from .routers import auth, gitea, notify, tasks, logs, ai
-import logging
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -30,7 +28,7 @@ async def startup_event():
     scheduler_service.start()
     # Reload active tasks into scheduler
     db = next(get_db())
-    active_tasks = db.query(ReportTask).filter(ReportTask.is_active == True).all()
+    active_tasks = db.query(ReportTask).filter(ReportTask.is_active).all()
     for task in active_tasks:
         try:
             scheduler_service.add_or_update_task(task.id, task.cron_expression)

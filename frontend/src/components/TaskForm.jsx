@@ -18,10 +18,10 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
     if (initialValues?.cron_expression) {
       const parts = initialValues.cron_expression.split(' ');
       if (parts.length >= 5) {
-        const [m, h, dom, mon, dow] = parts;
+        const [m, h, dom, _mon, dow] = parts;
         
         const formValues = {
-          scheduled_time: dayjs().set('hour', h).set('minute', m)
+          scheduled_time: dayjs().set('hour', Number(h)).set('minute', Number(m))
         };
 
         if (dow === '1-5') {
@@ -39,7 +39,7 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
         form.setFieldsValue(formValues);
       }
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
 
   const fetchConfigs = async () => {
     try {
@@ -51,7 +51,7 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
       setGiteaConfigs(giteaRes.data);
       setNotifyConfigs(notifyRes.data);
       setAiConfigs(aiRes.data);
-    } catch (error) {
+    } catch (_error) {
       message.error('获取配置失败');
     }
   };
@@ -123,8 +123,8 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
         message.success('任务创建成功');
       }
       onSuccess();
-    } catch (error) {
-      message.error(error.response?.data?.detail || '保存任务失败');
+    } catch (_error) {
+      message.error(_error.response?.data?.detail || '保存任务失败');
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,6 @@
-import httpx
 import json
-import re
-from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional
+from datetime import datetime
+from typing import List, Dict, Any
 from ..core.http_client import HttpClientManager
 
 class GiteaService:

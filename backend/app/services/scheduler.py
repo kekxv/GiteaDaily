@@ -1,9 +1,8 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from ..database import SessionLocal
-from ..models import ReportTask, TaskLog, GiteaConfig, NotifyConfig
+from ..models import ReportTask, TaskLog
 from .gitea import GiteaService
 from .webhook import WebhookService
 from .ai import AIService
@@ -17,7 +16,7 @@ class SchedulerService:
         import tzlocal
         try:
             local_tz = tzlocal.get_localzone()
-        except:
+        except Exception:
             local_tz = None
         self.scheduler = AsyncIOScheduler(timezone=local_tz)
 

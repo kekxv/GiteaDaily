@@ -43,7 +43,7 @@ const Dashboard = () => {
       }
       const res = await api.get('/logs/', { params });
       setLogs(res.data);
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to fetch logs');
     } finally {
       setLogLoading(false);

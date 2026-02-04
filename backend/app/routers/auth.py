@@ -6,7 +6,6 @@ from ..database import get_db
 from ..models import User
 from ..schemas import UserCreate, UserResponse, Token
 from ..core.security import get_password_hash, verify_password, create_access_token, SECRET_KEY, ALGORITHM
-from datetime import timedelta
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")

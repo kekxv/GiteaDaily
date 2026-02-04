@@ -16,7 +16,7 @@ const TaskList = ({ onEdit, onViewLogs }) => {
     try {
       const response = await api.get('/tasks/');
       setTasks(response.data);
-    } catch (error) {
+    } catch (_error) {
       message.error('获取任务列表失败');
     } finally {
       setLoading(false);
@@ -27,7 +27,7 @@ const TaskList = ({ onEdit, onViewLogs }) => {
     try {
       await api.post(`/tasks/${id}/run`);
       message.success('已触发即时执行，日报稍后送达');
-    } catch (error) {
+    } catch (_error) {
       message.error('触发失败');
     }
   };
@@ -37,7 +37,7 @@ const TaskList = ({ onEdit, onViewLogs }) => {
       await api.delete(`/tasks/${id}`);
       message.success('任务已删除');
       fetchTasks();
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败');
     }
   };
@@ -50,7 +50,7 @@ const TaskList = ({ onEdit, onViewLogs }) => {
       });
       message.success(`任务已${!task.is_active ? '启用' : '禁用'}`);
       fetchTasks();
-    } catch (error) {
+    } catch (_error) {
       message.error('操作失败');
     }
   };
@@ -58,7 +58,7 @@ const TaskList = ({ onEdit, onViewLogs }) => {
   const formatCron = (cron) => {
     const parts = cron.split(' ');
     if (parts.length < 5) return cron;
-    const [m, h, dom, mon, dow] = parts;
+    const [m, h, dom, _mon, dow] = parts;
     const time = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
     
     if (dow === '1-5') return `工作日 ${time}`;

@@ -1,4 +1,3 @@
-import httpx
 from typing import List
 from ..core.http_client import HttpClientManager
 

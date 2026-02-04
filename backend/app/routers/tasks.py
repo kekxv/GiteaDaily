@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
@@ -50,8 +51,6 @@ def update_task(task_id: int, task_data: ReportTaskCreate, db: Session = Depends
         
     return task
 
-from fastapi.concurrency import run_in_threadpool
-
 @router.post("/test-run")
 async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Get the actual configs from DB to get the tokens/urls
@@ -67,7 +66,7 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
 
     from ..services.gitea import GiteaService
     from ..services.webhook import WebhookService
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     gitea_service = GiteaService(gitea_cfg.base_url, gitea_cfg.token)
     
