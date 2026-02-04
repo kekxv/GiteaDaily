@@ -5,7 +5,6 @@ from .services.scheduler import scheduler_service
 from .models import ReportTask
 from .routers import auth, gitea, notify, tasks, logs, ai
 
-from fastapi.staticfiles import StaticFiles
 import os
 
 # Initialize DB
