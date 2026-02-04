@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==3.2.0
+python-multipart
+httpx
+apscheduler
+python-dotenv
+openai
+tzlocal

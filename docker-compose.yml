@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  gitea-reporter:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/gitea_reporter.db
+      - SECRET_KEY=your-secret-key-replace-me
+    restart: always
