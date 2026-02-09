@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
-from sqlalchemy import update, and_, or_
+from sqlalchemy import update, or_
 import json
 import traceback
 import tzlocal
@@ -61,9 +61,9 @@ class SchedulerService:
             stmt = (
                 update(ReportTask)
                 .where(ReportTask.id == task_id)
-                .where(ReportTask.is_active == True)
+                .where(ReportTask.is_active)
                 .where(or_(
-                    ReportTask.last_run_at == None,
+                    ReportTask.last_run_at.is_(None),
                     ReportTask.last_run_at < lock_threshold
                 ))
                 .values(last_run_at=now)
