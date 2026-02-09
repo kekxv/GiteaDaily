@@ -1,19 +1,22 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
+from sqlalchemy import update, and_, or_
+import json
+import traceback
+import tzlocal
+import logging
 from ..database import SessionLocal
 from ..models import ReportTask, TaskLog
 from .gitea import GiteaService
 from .webhook import WebhookService
 from .ai import AIService
-import logging
 
 logger = logging.getLogger(__name__)
 
 class SchedulerService:
     def __init__(self):
         # Use system local timezone
-        import tzlocal
         try:
             local_tz = tzlocal.get_localzone()
         except Exception:
@@ -52,7 +55,6 @@ class SchedulerService:
             # Try to acquire lock using last_run_at
             # Use a 50-second buffer (slightly less than 1 minute) to prevent duplicate runs from multiple workers
             # but still allow the task to run again in the next minute if scheduled every minute.
-            from sqlalchemy import update, and_, or_
             now = datetime.now().astimezone()
             lock_threshold = now - timedelta(seconds=50)
 
@@ -98,7 +100,6 @@ class SchedulerService:
             since = (now - timedelta(days=task.report_days)).replace(hour=0, minute=0, second=0, microsecond=0)
             until = now
 
-            import json
             markdown_report = ""
             total_commits = 0
             raw_data_obj = {}
@@ -201,7 +202,6 @@ class SchedulerService:
             
         except Exception as e:
             logger.error(f"Error executing task {task_id}: {e}")
-            import traceback
             error_details = traceback.format_exc()
             
             if log_id:
