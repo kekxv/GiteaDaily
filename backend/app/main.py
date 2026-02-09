@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base, get_db, init_db
+from .database import get_db, init_db
 from .services.scheduler import scheduler_service
 from .models import ReportTask
 from .routers import auth, gitea, notify, tasks, logs, ai
