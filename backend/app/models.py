@@ -68,6 +68,7 @@ class ReportTask(Base):
     is_ai_enabled = Column(Boolean, default=False)
     ai_system_prompt = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
+    last_run_at = Column(DateTime(timezone=True), nullable=True)
 
     owner = relationship("User", back_populates="tasks")
     gitea_config = relationship("GiteaConfig", back_populates="tasks")

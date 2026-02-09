@@ -49,8 +49,32 @@ class SchedulerService:
         db = SessionLocal()
         log_id = None
         try:
+            # Try to acquire lock using last_run_at
+            # Use a 50-second buffer (slightly less than 1 minute) to prevent duplicate runs from multiple workers
+            # but still allow the task to run again in the next minute if scheduled every minute.
+            from sqlalchemy import update, and_, or_
+            now = datetime.now().astimezone()
+            lock_threshold = now - timedelta(seconds=50)
+
+            stmt = (
+                update(ReportTask)
+                .where(ReportTask.id == task_id)
+                .where(ReportTask.is_active == True)
+                .where(or_(
+                    ReportTask.last_run_at == None,
+                    ReportTask.last_run_at < lock_threshold
+                ))
+                .values(last_run_at=now)
+            )
+            result = db.execute(stmt)
+            db.commit()
+
+            if result.rowcount == 0:
+                # Could not acquire lock (either not active or already run recently)
+                return
+
             task = db.query(ReportTask).filter(ReportTask.id == task_id).first()
-            if not task or not task.is_active:
+            if not task:
                 return
 
             # 1. Create initial log entry with 'running' status

@@ -80,6 +80,7 @@ class ReportTaskCreate(ReportTaskBase):
 
 class ReportTaskResponse(ReportTaskBase):
     id: int
+    last_run_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 
