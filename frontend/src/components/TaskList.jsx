@@ -61,10 +61,10 @@ const TaskList = ({ onEdit, onViewLogs }) => {
     const [m, h, dom, _mon, dow] = parts;
     const time = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
     
-    if (dow === '1-5') return `工作日 ${time}`;
+    if (dow === '0-4') return `工作日 ${time}`;
     if (dow !== '*' && dow !== '?') {
       const days = dow.split(',').map(d => {
-        const map = { '1':'一', '2':'二', '3':'三', '4':'四', '5':'五', '6':'六', '0':'日' };
+        const map = { '0':'一', '1':'二', '2':'三', '3':'四', '4':'五', '5':'六', '6':'日' };
         return map[d];
       });
       return `每周(${days.join(',')}) ${time}`;
