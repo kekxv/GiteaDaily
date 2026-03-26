@@ -24,11 +24,13 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
           scheduled_time: dayjs().set('hour', Number(h)).set('minute', Number(m))
         };
 
-        if (dow === '0-4') {
+        if (dow === 'mon-fri') {
           formValues.frequency = 'weekdays';
         } else if (dow !== '*' && dow !== '?') {
           formValues.frequency = 'weekly';
-          formValues.week_days = dow.split(',').map(Number);
+          // 转换星期名称到前端编码 (mon=0, tue=1, ..., sun=6)
+          const dayNameToValue = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6};
+          formValues.week_days = dow.split(',').map(d => dayNameToValue[d] ?? Number(d));
         } else if (dom.startsWith('*/')) {
           formValues.frequency = 'interval';
           formValues.interval_days = Number(dom.split('/')[1]);
@@ -66,10 +68,14 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
       const h = time.hour();
       let cron = `${m} ${h} * * *`;
 
+      // 星期名称映射 (前端编码 -> cron 名称)
+      const dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
       if (values.frequency === 'weekdays') {
-        cron = `${m} ${h} * * 0-4`;
+        cron = `${m} ${h} * * mon-fri`;
       } else if (values.frequency === 'weekly') {
-        cron = `${m} ${h} * * ${values.week_days.join(',')}`;
+        const days = values.week_days.map(d => dayNames[d]).join(',');
+        cron = `${m} ${h} * * ${days}`;
       } else if (values.frequency === 'interval') {
         cron = `${m} ${h} */${values.interval_days} * *`;
       }
@@ -97,10 +103,14 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
     const h = time.hour();
     let cron = `${m} ${h} * * *`;
 
+    // 星期名称映射 (前端编码 -> cron 名称)
+    const dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
     if (values.frequency === 'weekdays') {
-      cron = `${m} ${h} * * 0-4`;
+      cron = `${m} ${h} * * mon-fri`;
     } else if (values.frequency === 'weekly') {
-      cron = `${m} ${h} * * ${values.week_days.join(',')}`;
+      const days = values.week_days.map(d => dayNames[d]).join(',');
+      cron = `${m} ${h} * * ${days}`;
     } else if (values.frequency === 'interval') {
       cron = `${m} ${h} */${values.interval_days} * *`;
     }
