@@ -12,4 +12,5 @@ python-dotenv
 openai
 tzlocal
 pytest
+pytest-asyncio
 ruff
