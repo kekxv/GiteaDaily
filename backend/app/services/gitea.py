@@ -1,7 +1,9 @@
 import json
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from ..core.http_client import HttpClientManager
+
 
 class GiteaService:
     def __init__(self, base_url: str, token: str):
@@ -55,7 +57,7 @@ class GiteaService:
             data = response.json()
             if not data:
                 break
-            
+
             finished = False
             for act in data:
                 # If user_id is provided, verify it matches act_user_id
@@ -68,7 +70,7 @@ class GiteaService:
                     finished = True
                     break
                 activities.append(act)
-            
+
             if finished or len(data) < 50:
                 break
             page += 1
@@ -142,24 +144,24 @@ class GiteaService:
     def generate_markdown_report(report_date: datetime, data_by_repo: Dict[str, Dict[str, Any]]) -> str:
         date_str = report_date.strftime("%Y-%m-%d")
         report = f"### 🚀 代码提交与任务日报 ({date_str})\n\n"
-        
+
         has_content = False
         for repo, data in data_by_repo.items():
             commits = data.get("commits", [])
             issues = data.get("issues", [])
             prs = data.get("prs", [])
-            
+
             if not (commits or issues or prs):
                 continue
-            
+
             has_content = True
             report += f"#### 📦 {repo}\n"
-            
+
             if commits:
                 report += "**[代码提交]**\n"
                 for c in commits:
                     report += f"- {c['message']} (@{c['author']})\n"
-            
+
             if prs:
                 report += "**[待处理 PR]**\n"
                 for p in prs:
@@ -169,32 +171,32 @@ class GiteaService:
                 report += "**[未关闭 Issue]**\n"
                 for i in issues:
                     report += f"- #{i['id']} {i['title']} (@{i['user']})\n"
-            
+
             report += "\n"
-        
+
         if not has_content:
             report += "此时间段内无活跃记录。"
         else:
             total_commits = sum(len(d.get("commits", [])) for d in data_by_repo.values())
             report += f"---\n**活跃概览: {total_commits} 提交**"
-            
+
         return report
 
     @staticmethod
     def generate_activity_report(report_date: datetime, data_by_repo: Dict[str, Dict[str, Any]], user_full_name: str) -> str:
         date_str = report_date.strftime("%Y-%m-%d")
         report = f"### 📝 {user_full_name} 的个人活动轨迹 ({date_str})\n\n"
-        
+
         if not data_by_repo:
             report += "此时间段内无活动轨迹。"
             return report
 
         for repo, data in data_by_repo.items():
             report += f"#### 📦 {repo}\n"
-            
+
             # Combine all activities
             acts = data.get("activities", [])
-            
+
             # Use a set to prevent duplicate commit messages from multiple push events
             commit_messages = []
             seen_shas = set()
@@ -202,7 +204,7 @@ class GiteaService:
             for act in acts:
                 op_type = act["op_type"]
                 content_str = act.get("content", "")
-                
+
                 if (op_type == "commit_repo" or op_type == "push_repo") and content_str:
                     try:
                         content_json = json.loads(content_str)
@@ -221,7 +223,7 @@ class GiteaService:
                 report += "**[代码提交]**\n"
                 for msg in commit_messages:
                     report += f"- {msg}\n"
-            
+
             # Show other activities
             other_acts = [a for a in acts if a["op_type"] not in ["commit_repo", "push_repo"]]
             if other_acts:
@@ -239,5 +241,5 @@ class GiteaService:
                     elif op_type == "comment_issue" or op_type == "comment_pull_request":
                         report += f"- 发表了评论于 #{act['index']}\n"
             report += "\n"
-        
+
         return report

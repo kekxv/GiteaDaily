@@ -1,6 +1,9 @@
 import os
+
 from fastapi.testclient import TestClient
+
 from .main import app
+
 
 def test_frontend_fallback():
     # Ensure static directory and index.html exist for the test

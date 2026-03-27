@@ -1,8 +1,10 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import List
+
 from ..database import get_db
-from ..models import TaskLog, ReportTask, User
+from ..models import ReportTask, TaskLog, User
 from ..schemas import TaskLogResponse
 from .auth import get_current_user
 
@@ -21,12 +23,12 @@ def get_logs(
     query = db.query(TaskLog).join(ReportTask).filter(ReportTask.user_id == current_user.id)
     if task_id:
         query = query.filter(TaskLog.task_id == task_id)
-    
+
     if start_date:
         from datetime import datetime
         query = query.filter(TaskLog.created_at >= datetime.fromisoformat(start_date))
     if end_date:
         from datetime import datetime
         query = query.filter(TaskLog.created_at <= datetime.fromisoformat(end_date))
-    
+
     return query.order_by(TaskLog.created_at.desc()).offset(offset).limit(limit).all()

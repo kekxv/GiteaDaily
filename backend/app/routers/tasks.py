@@ -1,9 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
-from typing import List
+
 from ..database import get_db
-from ..models import ReportTask, User, GiteaConfig, NotifyConfig, AIConfig
+from ..models import AIConfig, GiteaConfig, NotifyConfig, ReportTask, User
 from ..schemas import ReportTaskCreate, ReportTaskResponse
 from ..services.scheduler import scheduler_service
 from .auth import get_current_user
@@ -16,13 +18,13 @@ def create_task(task: ReportTaskCreate, db: Session = Depends(get_db), current_u
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
-    
+
     if new_task.is_active:
         try:
             scheduler_service.add_or_update_task(new_task.id, new_task.cron_expression)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid cron expression: {e}")
-            
+
     return new_task
 
 @router.get("/", response_model=List[ReportTaskResponse])
@@ -34,13 +36,13 @@ def update_task(task_id: int, task_data: ReportTaskCreate, db: Session = Depends
     task = db.query(ReportTask).filter(ReportTask.id == task_id, ReportTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     for key, value in task_data.dict().items():
         setattr(task, key, value)
-    
+
     db.commit()
     db.refresh(task)
-    
+
     if task.is_active:
         try:
             scheduler_service.add_or_update_task(task.id, task.cron_expression)
@@ -48,7 +50,7 @@ def update_task(task_id: int, task_data: ReportTaskCreate, db: Session = Depends
             raise HTTPException(status_code=400, detail=f"Invalid cron expression: {e}")
     else:
         scheduler_service.remove_task(task.id)
-        
+
     return task
 
 @router.post("/test-run")
@@ -60,16 +62,17 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
     notify_cfg = await run_in_threadpool(
         lambda: db.query(NotifyConfig).filter(NotifyConfig.id == task_data.notify_config_id, NotifyConfig.user_id == current_user.id).first()
     )
-    
+
     if not gitea_cfg or not notify_cfg:
         raise HTTPException(status_code=404, detail="Gitea or Notify config not found")
 
-    from ..services.gitea import GiteaService
-    from ..services.webhook import WebhookService
     from datetime import datetime, timedelta
 
+    from ..services.gitea import GiteaService
+    from ..services.webhook import WebhookService
+
     gitea_service = GiteaService(gitea_cfg.base_url, gitea_cfg.token)
-    
+
     # Use Aware Local Time
     now = datetime.now().astimezone()
     since = (now - timedelta(days=task_data.report_days)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -83,14 +86,14 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
         user_id = user_info.get("id")
         full_name = user_info.get("full_name") or username
         activities = await gitea_service.get_user_activities(username, since, user_id=user_id)
-        
+
         # Group activities by repo for generate_activity_report
         for act in activities:
             repo_name = act["repo"]["full_name"]
             if repo_name not in data_by_repo:
                 data_by_repo[repo_name] = {"activities": [], "detailed_commits": []}
             data_by_repo[repo_name]["activities"].append(act)
-            
+
         markdown_report = gitea_service.generate_activity_report(since, data_by_repo, full_name)
     else:
         repos_to_check = []
@@ -123,7 +126,7 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
                 }
 
         markdown_report = gitea_service.generate_markdown_report(since, data_by_repo)
-    
+
     # AI Summary in test run
     if task_data.is_ai_enabled and task_data.ai_config_id:
         ai_cfg = await run_in_threadpool(
@@ -133,7 +136,7 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
             from ..services.ai import AIService
             # Priority: Incoming task_data prompt > AI Config prompt
             system_prompt = task_data.ai_system_prompt or ai_cfg.system_prompt
-            
+
             ai_summary = await AIService.summarize_report(
                 api_base=ai_cfg.api_base,
                 api_key=ai_cfg.api_key,
@@ -144,10 +147,10 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
             markdown_report = f"{ai_summary}\n\n{markdown_report}"
 
     success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, f"【配置测试】\n{markdown_report}")
-    
+
     if not success:
         raise HTTPException(status_code=400, detail="Failed to send notification to Webhook")
-        
+
     return {"message": "Test report sent successfully", "commit_count": sum(len(d.get("commits", [])) for d in data_by_repo.values())}
 
 @router.delete("/{task_id}")
@@ -155,7 +158,7 @@ def delete_task(task_id: int, db: Session = Depends(get_db), current_user: User 
     task = db.query(ReportTask).filter(ReportTask.id == task_id, ReportTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     scheduler_service.remove_task(task.id)
     db.delete(task)
     db.commit()
@@ -166,11 +169,12 @@ async def run_task_immediately(task_id: int, db: Session = Depends(get_db), curr
     task = db.query(ReportTask).filter(ReportTask.id == task_id, ReportTask.user_id == current_user.id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     # We can use the scheduler to run it once immediately
     import uuid
+
     from ..services.scheduler import scheduler_service
-    
+
     # Generate a unique job id for this manual run
     job_id = f"manual_{task_id}_{uuid.uuid4().hex[:8]}"
     scheduler_service.scheduler.add_job(

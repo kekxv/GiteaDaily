@@ -11,9 +11,9 @@
 - 使用星期名称 (mon, tue, wed, thu, fri, sat, sun) 可以避免歧义
 """
 
-import pytest
-from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
+
+from apscheduler.triggers.cron import CronTrigger
 
 
 class TestCronDayOfWeek:
@@ -106,8 +106,6 @@ class TestCronExpressionGeneration:
         frequency = "weekdays"
         minute, hour = 30, 9
 
-        day_names = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-
         if frequency == 'weekdays':
             cron = f"{minute} {hour} * * mon-fri"
         else:
@@ -121,7 +119,6 @@ class TestCronExpressionGeneration:
 
     def test_weekly_generates_correct_day_names(self):
         """验证每周特定时间模式生成正确的星期名称"""
-        frequency = "weekly"
         week_days = [0, 2, 4]  # 周一、周三、周五
         minute, hour = 30, 9
 

@@ -7,15 +7,16 @@
 3. 错误处理
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # 添加 backend 目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.services.ai import AIService, DEFAULT_SUMMARY_PROMPT
+from app.services.ai import DEFAULT_SUMMARY_PROMPT, AIService
 
 
 class TestAIDefaultPrompt:
@@ -53,7 +54,7 @@ class TestAIServiceSummarize:
             mock_response.choices[0].message.content = "### 工作摘要\n今日完成了测试。"
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-            result = await AIService.summarize_report(
+            _result = await AIService.summarize_report(
                 api_base="https://api.example.com/v1",
                 api_key="test-key",
                 model="gpt-3.5-turbo",
@@ -80,7 +81,7 @@ class TestAIServiceSummarize:
             mock_response.choices[0].message.content = "测试结果"
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-            result = await AIService.summarize_report(
+            _result = await AIService.summarize_report(
                 api_base="https://api.example.com/v1",
                 api_key="test-key",
                 model="gpt-3.5-turbo",

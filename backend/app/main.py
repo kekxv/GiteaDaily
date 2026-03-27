@@ -1,11 +1,12 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import get_db, init_db
-from .services.scheduler import scheduler_service
-from .models import ReportTask
-from .routers import auth, gitea, notify, tasks, logs, ai
 
-import os
+from .database import get_db, init_db
+from .models import ReportTask
+from .routers import ai, auth, gitea, logs, notify, tasks
+from .services.scheduler import scheduler_service
 
 # Initialize DB with migrations
 init_db()
@@ -59,7 +60,7 @@ async def serve_frontend(full_path: str = ""):
     if full_path.startswith("api/"):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Not Found")
-    
+
     # In some environments, the root path might be passed as an empty string
     if not full_path or full_path == "/":
         full_path = "index.html"
@@ -71,13 +72,13 @@ async def serve_frontend(full_path: str = ""):
         if os.path.isfile(file_path):
             from fastapi.responses import FileResponse
             return FileResponse(file_path)
-            
+
         # Otherwise serve index.html for React Router (SPA fallback)
         index_path = os.path.join("static", "index.html")
         if os.path.exists(index_path):
             from fastapi.responses import FileResponse
             return FileResponse(index_path)
-    
+
     # If not even index.html exists, or static dir doesn't exist
     from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="Not Found")

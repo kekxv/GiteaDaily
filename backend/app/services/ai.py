@@ -1,6 +1,8 @@
 import re
 from typing import Optional
+
 from openai import AsyncOpenAI
+
 from ..core.http_client import HttpClientManager
 
 # 默认系统提示词 - 结构化日报格式
@@ -36,7 +38,7 @@ class AIService:
 
         # Use the official OpenAI SDK for better compatibility
         base_url = api_base.rstrip("/")
-        
+
         if not base_url.startswith(("http://", "https://")):
             return f"AI 总结出错: API Base URL 必须以 http:// 或 https:// 开头。当前值: {api_base}"
 
@@ -64,16 +66,16 @@ class AIService:
                 max_tokens=2000,  # 确保输出足够长
                 timeout=120.0 # Reasoning models take longer
             )
-            
+
             # Extract content
             res_content = response.choices[0].message.content or ""
-            
-            # Handle "Think" mode: 
+
+            # Handle "Think" mode:
             # 1. Some providers put thinking in reasoning_content (ignored for the final summary)
             # 2. Some put it inside <think> tags in the main content
             if "<think>" in res_content:
                 res_content = re.sub(r'<think>.*?</think>', '', res_content, flags=re.DOTALL).strip()
-            
+
             if not res_content:
                 return "⚠️ AI 返回了空内容，请检查模型配置或提示词。"
 
@@ -84,9 +86,10 @@ class AIService:
 
         except Exception as e:
             import traceback
+
             import httpx
             error_details = traceback.format_exc()
-            
+
             # Special handling for common httpx errors to make them more readable
             error_msg = str(e)
             if isinstance(e, httpx.ConnectError):
@@ -95,5 +98,5 @@ class AIService:
                 error_msg = f"请求超时，模型响应过慢或网络不通。详情: {error_msg}"
             elif isinstance(e, httpx.HTTPStatusError):
                 error_msg = f"API 返回了错误状态码: {e.response.status_code}。内容: {e.response.text}"
-            
+
             return f"AI 总结出错: {error_msg}\n详情: {error_details[:300]}"

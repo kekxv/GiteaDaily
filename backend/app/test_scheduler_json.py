@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+
 def test_json_serialization_with_datetime():
     # Define a simple datetime handler similar to the one in scheduler.py
     def datetime_handler(x):
@@ -27,7 +28,7 @@ def test_json_serialization_with_datetime():
     try:
         json_str = json.dumps(raw_data_obj, default=datetime_handler, ensure_ascii=False)
         data = json.loads(json_str)
-        
+
         # Verify it's correctly serialized to ISO string
         assert data["activities"][0]["created"] == now.isoformat()
         assert data["repo_data"]["owner/repo"]["commits"][0]["date"] == now.isoformat()

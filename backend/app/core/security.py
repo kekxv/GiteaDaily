@@ -1,8 +1,9 @@
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from jose import jwt
 from passlib.context import CryptContext
-import os
 
 # Secrets should be in .env in production
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-dev-only")

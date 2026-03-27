@@ -1,17 +1,19 @@
+import asyncio
+import json
+import logging
+import traceback
+from datetime import datetime, timedelta
+
+import tzlocal
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime, timedelta
-from sqlalchemy import update, or_
-import json
-import traceback
-import tzlocal
-import logging
-import asyncio
+from sqlalchemy import or_, update
+
 from ..database import SessionLocal
 from ..models import ReportTask, TaskLog
+from .ai import AIService
 from .gitea import GiteaService
 from .webhook import WebhookService
-from .ai import AIService
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class SchedulerService:
             local_tz = tzlocal.get_localzone()
         except Exception:
             local_tz = None
-        
+
         # job_defaults: ensure only 1 instance of a task runs per process
         job_defaults = {
             'coalesce': True,
@@ -42,7 +44,7 @@ class SchedulerService:
         job_id = f"task_{task_id}"
         if self.scheduler.get_job(job_id):
             self.scheduler.remove_job(job_id)
-        
+
         self.scheduler.add_job(
             self.execute_task,
             CronTrigger.from_crontab(cron_expression),
@@ -103,7 +105,7 @@ class SchedulerService:
                 gitea_cfg = task.gitea_config
                 notify_cfg = task.notify_config
                 gitea_service = GiteaService(gitea_cfg.base_url, gitea_cfg.token)
-                
+
                 # Use Aware Local Time for calculations
                 now = datetime.now().astimezone()
                 since = (now - timedelta(days=task.report_days)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -119,9 +121,9 @@ class SchedulerService:
                     user_id = user_info.get("id")
                     full_name = user_info.get("full_name") or username
                     activities = await gitea_service.get_user_activities(username, since, user_id=user_id)
-                    
+
                     raw_data_obj["activities"] = activities
-                    
+
                     # Group activities and fetch detailed commits for pushes
                     data_by_repo = {}
                     for act in activities:
@@ -129,7 +131,7 @@ class SchedulerService:
                         if repo_name not in data_by_repo:
                             data_by_repo[repo_name] = {"activities": [], "detailed_commits": []}
                         data_by_repo[repo_name]["activities"].append(act)
-                    
+
                     # For repos with pushes, get actual commit messages
                     for repo_name, repo_data in data_by_repo.items():
                         if any(a["op_type"] in ["commit_repo", "push_repo"] for a in repo_data["activities"]):
@@ -139,7 +141,7 @@ class SchedulerService:
                             my_commits = [c for c in all_commits if c["author"] == full_name or c["author"] == username]
                             repo_data["detailed_commits"] = my_commits
                             total_commits += len(my_commits)
-                    
+
                     markdown_report = gitea_service.generate_activity_report(since, data_by_repo, full_name)
                 else:
                     # ... existing repos logic ...
@@ -172,10 +174,10 @@ class SchedulerService:
                                 "prs": repo_prs
                             }
                             total_commits += len(repo_commits)
-                    
+
                     raw_data_obj["repo_data"] = data_by_repo
                     markdown_report = gitea_service.generate_markdown_report(since, data_by_repo)
-                
+
                 if task.is_ai_enabled and task.ai_config:
                     ai_cfg = task.ai_config
                     system_prompt = task.ai_system_prompt or ai_cfg.system_prompt
@@ -189,11 +191,11 @@ class SchedulerService:
                     markdown_report = f"{ai_summary}\n\n{markdown_report}"
 
                 success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, markdown_report)
-                
+
                 # 2. Update log to success or partial failed
                 status = "success" if success else "failed"
                 summary = f"执行完成：共统计到 {total_commits} 个提交" if success else "推送 Webhook 失败"
-                
+
                 def datetime_handler(x):
                     if isinstance(x, datetime):
                         return x.isoformat()
@@ -207,11 +209,11 @@ class SchedulerService:
                     log.log_details = markdown_report[:5000]
                     log.raw_data = json.dumps(raw_data_obj, default=datetime_handler, ensure_ascii=False)
                     db.commit()
-                
+
             except Exception as e:
                 logger.error(f"Error executing task {task_id}: {e}")
                 error_details = traceback.format_exc()
-                
+
                 if log_id:
                     log = db.query(TaskLog).filter(TaskLog.id == log_id).first()
                     if log:

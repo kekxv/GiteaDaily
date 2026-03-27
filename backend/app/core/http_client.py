@@ -1,5 +1,6 @@
 import httpx
 
+
 class HttpClientManager:
     _client: httpx.AsyncClient = None
 
