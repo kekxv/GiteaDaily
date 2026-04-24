@@ -230,16 +230,17 @@ class GiteaService:
                 for act in other_acts:
                     op_type = act["op_type"]
                     content = act.get("content", "")
+                    index = act.get("index", "?")
                     if op_type == "create_issue":
-                        report += f"- 创建了 Issue #{act['index']} {content}\n"
+                        report += f"- 创建了 Issue #{index} {content}\n"
                     elif op_type == "close_issue":
-                        report += f"- 关闭了 Issue #{act['index']}\n"
+                        report += f"- 关闭了 Issue #{index}\n"
                     elif op_type == "create_pull_request":
-                        report += f"- 创建了 PR #{act['index']} {content}\n"
+                        report += f"- 创建了 PR #{index} {content}\n"
                     elif op_type == "merge_pull_request":
-                        report += f"- 合并了 PR #{act['index']}\n"
+                        report += f"- 合并了 PR #{index}\n"
                     elif op_type == "comment_issue" or op_type == "comment_pull_request":
-                        report += f"- 发表了评论于 #{act['index']}\n"
+                        report += f"- 发表了评论于 #{index}\n"
             report += "\n"
 
         return report
