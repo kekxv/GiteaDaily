@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,20 +12,10 @@ from .services.scheduler import scheduler_service
 # Initialize DB with migrations
 init_db()
 
-app = FastAPI(title="Gitea Daily Reporter API")
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Startup
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     scheduler_service.start()
     # Reload active tasks into scheduler
     db = next(get_db())
@@ -36,9 +27,22 @@ async def startup_event():
             print(f"Failed to load task {task.id}: {e}")
     db.close()
 
-@app.on_event("shutdown")
-def shutdown_event():
+    yield
+
+    # Shutdown
     scheduler_service.stop()
+
+
+app = FastAPI(title="Gitea Daily Reporter API", lifespan=lifespan)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])

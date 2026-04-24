@@ -188,7 +188,7 @@ class SchedulerService:
                         content=markdown_report,
                         system_prompt=system_prompt
                     )
-                    markdown_report = f"{ai_summary}\n\n{markdown_report}"
+                    markdown_report = ai_summary  # 只使用AI整理后的内容
 
                 success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, markdown_report)
 

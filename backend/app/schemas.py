@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # Auth
@@ -13,8 +13,7 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -31,8 +30,7 @@ class GiteaConfigCreate(GiteaConfigBase):
 
 class GiteaConfigResponse(GiteaConfigBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Notify Config
 class NotifyConfigBase(BaseModel):
@@ -44,8 +42,7 @@ class NotifyConfigCreate(NotifyConfigBase):
 
 class NotifyConfigResponse(NotifyConfigBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # AI Config
 class AIConfigBase(BaseModel):
@@ -60,8 +57,7 @@ class AIConfigCreate(AIConfigBase):
 
 class AIConfigResponse(AIConfigBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Report Task
 class ReportTaskBase(BaseModel):
@@ -83,8 +79,7 @@ class ReportTaskCreate(ReportTaskBase):
 class ReportTaskResponse(ReportTaskBase):
     id: int
     last_run_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Task Log
 class TaskLogResponse(BaseModel):
@@ -96,5 +91,4 @@ class TaskLogResponse(BaseModel):
     log_details: Optional[str] = None
     raw_data: Optional[str] = None
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

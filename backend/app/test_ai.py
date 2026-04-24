@@ -29,9 +29,9 @@ class TestAIDefaultPrompt:
 
     def test_default_prompt_contains_required_sections(self):
         """验证默认提示词包含必要的格式说明"""
-        assert "今日工作摘要" in DEFAULT_SUMMARY_PROMPT
-        assert "项目变更详情" in DEFAULT_SUMMARY_PROMPT
-        assert "重点关注" in DEFAULT_SUMMARY_PROMPT
+        assert "工作日报" in DEFAULT_SUMMARY_PROMPT
+        assert "项目名" in DEFAULT_SUMMARY_PROMPT
+        assert "企业微信" in DEFAULT_SUMMARY_PROMPT
         assert "Markdown" in DEFAULT_SUMMARY_PROMPT or "markdown" in DEFAULT_SUMMARY_PROMPT
 
     def test_default_prompt_requests_chinese(self):
@@ -162,15 +162,19 @@ class TestAIServiceSummarize:
     @pytest.mark.asyncio
     async def test_successful_response_is_returned(self):
         """验证成功响应被正确返回"""
-        expected_content = """### 📊 今日工作摘要
-今日完成了用户登录功能的开发。
+        expected_content = """# 工作日报 (2026-04-23)
 
-### 📦 项目变更详情
-- **user-service**: 实现了 OAuth2 登录
-- **api-gateway**: 添加了认证中间件
+**今日完成了用户登录功能的开发。**
 
-### ⚠️ 重点关注
-需要明天完成单元测试。"""
+## user-service
+> <font color="info">新增</font> OAuth2 登录
+
+## api-gateway
+> <font color="info">新增</font> 认证中间件
+
+---
+
+共 5 个提交"""
 
         with patch('app.services.ai.AsyncOpenAI') as mock_client_class:
             mock_client = MagicMock()
@@ -189,7 +193,7 @@ class TestAIServiceSummarize:
             )
 
             assert result == expected_content
-            assert "今日工作摘要" in result
+            assert "工作日报" in result
 
 
 class TestAIErrorHandling:
