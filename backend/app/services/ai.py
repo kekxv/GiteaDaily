@@ -21,14 +21,22 @@ DEFAULT_SUMMARY_PROMPT = """你是一个代码提交日报助手。
 
 **一句话摘要今日主要工作内容**
 
-## 项目名
-> <font color="info">新增</font> 功能描述
-> <font color="warning">修复</font> bug描述
-> 其他变更描述
+---
+
+### 项目名
+
+**提交**
+> 提交信息描述
+
+**待处理 PR**
+> #编号 PR标题
+
+**未关闭 Issue**
+> #编号 Issue标题
 
 ---
 
-共 X 个提交
+**今日共 X 个提交**
 
 ---
 
@@ -49,14 +57,22 @@ DEFAULT_WEEKLY_SUMMARY_PROMPT = """你是一个代码提交周报助手。
 
 **一句话摘要本周主要工作内容**
 
-## 项目名
-> <font color="info">新增</font> 功能描述
-> <font color="warning">修复</font> bug描述
-> 其他变更描述
+---
+
+### 项目名
+
+**本周进展**
+> 主要提交内容描述
+
+**待处理 PR**
+> #编号 PR标题
+
+**未关闭 Issue**
+> #编号 Issue标题
 
 ---
 
-本周共 X 个提交
+**本周共 X 个提交**
 
 ---
 
