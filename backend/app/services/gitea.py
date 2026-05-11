@@ -145,14 +145,38 @@ class GiteaService:
         return prs
 
     @staticmethod
+    def _classify_message(msg: str) -> tuple:
+        """根据 commit message 前缀分类，返回 (分类标签, 清理后的消息)"""
+        msg_lower = msg.lower().strip()
+        if msg_lower.startswith(('feat', '新增', 'add')):
+            return '新增', msg.split(':', 1)[-1].strip() if ':' in msg else msg
+        elif msg_lower.startswith(('fix', '修复', 'bug')):
+            return '修复', msg.split(':', 1)[-1].strip() if ':' in msg else msg
+        elif msg_lower.startswith(('update', '优化', 'refactor', 'chore', 'style', 'docs', 'perf')):
+            return '优化', msg.split(':', 1)[-1].strip() if ':' in msg else msg
+        elif msg_lower.startswith('merge'):
+            return '合并', msg
+        return '变更', msg
+
+    @staticmethod
     def generate_markdown_report(since: datetime, until: datetime, report_days: int, data_by_repo: Dict[str, Dict[str, Any]]) -> str:
+        COLOR_NEW = "#1976D2"
+        COLOR_FIX = "#FF9800"
+        COLOR_OPT = "#4CAF50"
+        COLOR_MERGE = "#9E9E9E"
+        COLOR_OTHER = "#666666"
+        COLOR_PR = "#1976D2"
+        COLOR_ISSUE = "#666666"
+
+        type_colors = {"新增": COLOR_NEW, "修复": COLOR_FIX, "优化": COLOR_OPT, "合并": COLOR_MERGE, "变更": COLOR_OTHER}
+
         report_type = get_report_type(report_days)
         if report_type == "weekly":
             date_str = f"{since.strftime('%Y-%m-%d')} ~ {until.strftime('%Y-%m-%d')}"
-            report = f"# 代码提交周报 ({date_str})\n\n"
+            report = f"### 🚀 代码提交与任务周报 ({date_str})\n\n"
         else:
             date_str = since.strftime("%Y-%m-%d")
-            report = f"# 代码提交日报 ({date_str})\n\n"
+            report = f"### 🚀 代码提交与任务日报 ({date_str})\n\n"
 
         has_content = False
         total_commits = 0
@@ -165,33 +189,40 @@ class GiteaService:
                 continue
 
             has_content = True
-            report += f"### {repo}\n"
+            total_commits += len(commits)
+            report += f"#### 📦 {repo}\n"
 
             if commits:
-                total_commits += len(commits)
-                report += "**提交**\n"
+                # 按类型分组
+                grouped = {}
                 for c in commits:
-                    report += f"> [{c['message']}]({c['url']}) — @{c['author']}\n"
+                    label, clean_msg = GiteaService._classify_message(c["message"])
+                    grouped.setdefault(label, []).append((clean_msg, c["author"]))
+                for label in ["新增", "修复", "优化", "合并", "变更"]:
+                    items = grouped.get(label, [])
+                    if not items:
+                        continue
+                    color = type_colors[label]
+                    for msg, author in items:
+                        report += f"> <font color=\"{color}\">{label}</font> {msg} (@{author})\n"
 
             if prs:
-                report += "**待处理 PR**\n"
                 for p in prs:
-                    report += f"> [#{p['id']} {p['title']}]({p['url']}) — @{p['user']}\n"
+                    report += f"> <font color=\"{COLOR_PR}\">PR #{p['id']}</font> {p['title']} (@{p['user']})\n"
 
             if issues:
-                report += "**未关闭 Issue**\n"
                 for i in issues:
-                    report += f"> [#{i['id']} {i['title']}]({i['url']}) — @{i['user']}\n"
+                    report += f"> <font color=\"{COLOR_ISSUE}\">Issue #{i['id']}</font> {i['title']} (@{i['user']})\n"
 
-            report += "\n---\n"
+            report += "\n"
 
         if not has_content:
             report += "此时间段内无活跃记录。"
         else:
             if report_type == "weekly":
-                report += f"**本周共 {total_commits} 个提交**"
+                report += f"---\n**本周活跃概览: {total_commits} 个提交**"
             else:
-                report += f"**今日共 {total_commits} 个提交**"
+                report += f"---\n**活跃概览: {total_commits} 个提交**"
 
         return report
 
@@ -200,22 +231,22 @@ class GiteaService:
         report_type = get_report_type(report_days)
         if report_type == "weekly":
             date_str = f"{since.strftime('%Y-%m-%d')} ~ {until.strftime('%Y-%m-%d')}"
-            report = f"# 活动轨迹周报 ({date_str})\n\n"
+            report = f"### 📝 {user_full_name} 的个人活动轨迹周报 ({date_str})\n\n"
         else:
             date_str = since.strftime("%Y-%m-%d")
-            report = f"# 活动轨迹日报 ({date_str})\n\n"
+            report = f"### 📝 {user_full_name} 的个人活动轨迹日报 ({date_str})\n\n"
 
         if not data_by_repo:
             report += "此时间段内无活动轨迹。"
             return report
 
-        total_commits = 0
         for repo, data in data_by_repo.items():
+            report += f"#### 📦 {repo}\n"
+
             acts = data.get("activities", [])
 
             commit_messages = []
             seen_shas = set()
-            other_acts = []
 
             for act in acts:
                 op_type = act["op_type"]
@@ -233,38 +264,28 @@ class GiteaService:
                                     seen_shas.add(sha)
                     except Exception:
                         pass
-                else:
-                    other_acts.append(act)
-
-            report += f"### {repo}\n"
 
             if commit_messages:
-                total_commits += len(commit_messages)
-                report += "**提交**\n"
+                report += "**[代码提交]**\n"
                 for msg in commit_messages:
-                    report += f"> {msg}\n"
+                    report += f"- {msg}\n"
 
+            other_acts = [a for a in acts if a["op_type"] not in ["commit_repo", "push_repo"]]
             if other_acts:
                 for act in other_acts:
                     op_type = act["op_type"]
                     content = act.get("content", "")
                     index = act.get("index", "?")
                     if op_type == "create_issue":
-                        report += f"> 创建 Issue #{index} {content}\n"
+                        report += f"- 创建了 Issue #{index} {content}\n"
                     elif op_type == "close_issue":
-                        report += f"> 关闭 Issue #{index}\n"
+                        report += f"- 关闭了 Issue #{index}\n"
                     elif op_type == "create_pull_request":
-                        report += f"> 创建 PR #{index} {content}\n"
+                        report += f"- 创建了 PR #{index} {content}\n"
                     elif op_type == "merge_pull_request":
-                        report += f"> 合并 PR #{index}\n"
+                        report += f"- 合并了 PR #{index}\n"
                     elif op_type == "comment_issue" or op_type == "comment_pull_request":
-                        report += f"> 评论 #{index}\n"
-
-            report += "\n---\n"
-
-        if report_type == "weekly":
-            report += f"**本周共 {total_commits} 个提交**"
-        else:
-            report += f"**今日共 {total_commits} 个提交**"
+                        report += f"- 发表了评论于 #{index}\n"
+            report += "\n"
 
         return report

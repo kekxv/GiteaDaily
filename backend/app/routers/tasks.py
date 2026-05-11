@@ -145,7 +145,8 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
                 system_prompt=system_prompt,
                 report_days=task_data.report_days
             )
-            markdown_report = f"{ai_summary}\n\n{markdown_report}"
+            if ai_summary:
+                markdown_report = f"{ai_summary}\n\n{markdown_report}"
 
     success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, f"【配置测试】\n{markdown_report}")
 

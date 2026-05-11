@@ -189,7 +189,9 @@ class SchedulerService:
                         system_prompt=system_prompt,
                         report_days=task.report_days
                     )
-                    markdown_report = ai_summary  # 只使用AI整理后的内容
+                    if ai_summary:
+                        markdown_report = ai_summary  # AI 整理成功，使用总结内容
+                    # 否则保留原始报告（截断或出错时回退）
 
                 success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, markdown_report)
 

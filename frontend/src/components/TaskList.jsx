@@ -60,13 +60,12 @@ const TaskList = ({ onEdit, onViewLogs }) => {
     if (parts.length < 5) return cron;
     const [m, h, dom, _mon, dow] = parts;
     const time = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
-    
-    if (dow === '0-4') return `工作日 ${time}`;
+
+    const dayNameToCn = { 'mon':'一', 'tue':'二', 'wed':'三', 'thu':'四', 'fri':'五', 'sat':'六', 'sun':'日' };
+
+    if (dow === 'mon-fri') return `工作日 ${time}`;
     if (dow !== '*' && dow !== '?') {
-      const days = dow.split(',').map(d => {
-        const map = { '0':'一', '1':'二', '2':'三', '3':'四', '4':'五', '5':'六', '6':'日' };
-        return map[d];
-      });
+      const days = dow.split(',').map(d => dayNameToCn[d] ?? d);
       return `每周(${days.join(',')}) ${time}`;
     }
     if (dom.startsWith('*/')) return `每隔${dom.split('/')[1]}天 ${time}`;
