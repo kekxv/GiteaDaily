@@ -32,6 +32,19 @@ async def test_gitea_connection(config_id: int, db: Session = Depends(get_db), c
     success = await service.test_connection()
     return {"success": success}
 
+@router.put("/{config_id}", response_model=GiteaConfigResponse)
+def update_gitea_config(config_id: int, config: GiteaConfigCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    cfg = db.query(GiteaConfig).filter(GiteaConfig.id == config_id, GiteaConfig.user_id == current_user.id).first()
+    if not cfg:
+        raise HTTPException(status_code=404, detail="Config not found")
+    for key, value in config.dict().items():
+        if key == 'token' and not value:
+            continue  # Keep existing token if not changed
+        setattr(cfg, key, value)
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
 @router.delete("/{config_id}")
 def delete_gitea_config(config_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cfg = db.query(GiteaConfig).filter(GiteaConfig.id == config_id, GiteaConfig.user_id == current_user.id).first()

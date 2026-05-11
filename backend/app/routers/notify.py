@@ -31,6 +31,17 @@ async def test_notify_connection(config_id: int, db: Session = Depends(get_db), 
     success = await WebhookService.send_wecom_markdown(cfg.webhook_url, "这是一条来自 Gitea Daily Reporter 的测试消息。")
     return {"success": success}
 
+@router.put("/{config_id}", response_model=NotifyConfigResponse)
+def update_notify_config(config_id: int, config: NotifyConfigCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    cfg = db.query(NotifyConfig).filter(NotifyConfig.id == config_id, NotifyConfig.user_id == current_user.id).first()
+    if not cfg:
+        raise HTTPException(status_code=404, detail="Config not found")
+    for key, value in config.dict().items():
+        setattr(cfg, key, value)
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
 @router.delete("/{config_id}")
 def delete_notify_config(config_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cfg = db.query(NotifyConfig).filter(NotifyConfig.id == config_id, NotifyConfig.user_id == current_user.id).first()

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'antd';
-import { PlusOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import api from '../services/api';
 
 const ConfigPage = () => {
@@ -12,7 +12,11 @@ const ConfigPage = () => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+
+  const [editingGitea, setEditingGitea] = useState(null);
+  const [editingNotify, setEditingNotify] = useState(null);
+  const [editingAi, setEditingAi] = useState(null);
+
   const [giteaForm] = Form.useForm();
   const [notifyForm] = Form.useForm();
   const [aiForm] = Form.useForm();
@@ -85,16 +89,54 @@ const ConfigPage = () => {
     }
   };
 
+  const openAddModal = (type) => {
+    if (type === 'gitea') {
+      setEditingGitea(null);
+      giteaForm.resetFields();
+      setIsGiteaModalOpen(true);
+    } else if (type === 'notify') {
+      setEditingNotify(null);
+      notifyForm.resetFields();
+      setIsNotifyModalOpen(true);
+    } else {
+      setEditingAi(null);
+      aiForm.resetFields();
+      setIsAiModalOpen(true);
+    }
+  };
+
+  const openEditModal = (type, record) => {
+    if (type === 'gitea') {
+      setEditingGitea(record);
+      giteaForm.setFieldsValue(record);
+      setIsGiteaModalOpen(true);
+    } else if (type === 'notify') {
+      setEditingNotify(record);
+      notifyForm.setFieldsValue(record);
+      setIsNotifyModalOpen(true);
+    } else {
+      setEditingAi(record);
+      aiForm.setFieldsValue(record);
+      setIsAiModalOpen(true);
+    }
+  };
+
   const onAddGitea = async (values) => {
     setSubmitting(true);
     try {
-      await api.post('/gitea/', values);
-      message.success('配置已添加');
+      if (editingGitea) {
+        await api.put(`/gitea/${editingGitea.id}`, values);
+        message.success('配置已更新');
+      } else {
+        await api.post('/gitea/', values);
+        message.success('配置已添加');
+      }
       setIsGiteaModalOpen(false);
       giteaForm.resetFields();
+      setEditingGitea(null);
       fetchConfigs();
     } catch (_error) {
-      message.error('添加失败');
+      message.error('保存失败');
     } finally {
       setSubmitting(false);
     }
@@ -103,13 +145,19 @@ const ConfigPage = () => {
   const onAddNotify = async (values) => {
     setSubmitting(true);
     try {
-      await api.post('/notify/', values);
-      message.success('配置已添加');
+      if (editingNotify) {
+        await api.put(`/notify/${editingNotify.id}`, values);
+        message.success('配置已更新');
+      } else {
+        await api.post('/notify/', values);
+        message.success('配置已添加');
+      }
       setIsNotifyModalOpen(false);
       notifyForm.resetFields();
+      setEditingNotify(null);
       fetchConfigs();
     } catch (_error) {
-      message.error('添加失败');
+      message.error('保存失败');
     } finally {
       setSubmitting(false);
     }
@@ -118,13 +166,19 @@ const ConfigPage = () => {
   const onAddAi = async (values) => {
     setSubmitting(true);
     try {
-      await api.post('/ai/', values);
-      message.success('AI 配置已添加');
+      if (editingAi) {
+        await api.put(`/ai/${editingAi.id}`, values);
+        message.success('AI 配置已更新');
+      } else {
+        await api.post('/ai/', values);
+        message.success('AI 配置已添加');
+      }
       setIsAiModalOpen(false);
       aiForm.resetFields();
+      setEditingAi(null);
       fetchConfigs();
     } catch (_error) {
-      message.error('添加失败');
+      message.error('保存失败');
     } finally {
       setSubmitting(false);
     }
@@ -133,53 +187,60 @@ const ConfigPage = () => {
   const giteaColumns = [
     { title: '别名', dataIndex: 'name', key: 'name' },
     { title: 'Base URL', dataIndex: 'base_url', key: 'base_url' },
-    { 
-      title: '操作', 
-      key: 'action', 
+    {
+      title: '操作',
+      key: 'action',
       render: (_, record) => (
         <Space>
           <Button icon={<CheckCircleOutlined />} onClick={() => handleTestGitea(record.id)}>测试连接</Button>
+          <Button icon={<EditOutlined />} onClick={() => openEditModal('gitea', record)}>编辑</Button>
           <Popconfirm title="确定删除？" onConfirm={() => handleDelete('gitea', record.id)}>
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
-      ) 
+      )
     },
   ];
 
   const notifyColumns = [
     { title: '别名', dataIndex: 'name', key: 'name' },
     { title: 'Webhook URL', dataIndex: 'webhook_url', key: 'webhook_url', ellipsis: true },
-    { 
-      title: '操作', 
-      key: 'action', 
+    {
+      title: '操作',
+      key: 'action',
       render: (_, record) => (
         <Space>
           <Button icon={<CheckCircleOutlined />} onClick={() => handleTestNotify(record.id)}>发送测试</Button>
+          <Button icon={<EditOutlined />} onClick={() => openEditModal('notify', record)}>编辑</Button>
           <Popconfirm title="确定删除？" onConfirm={() => handleDelete('notify', record.id)}>
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
-      ) 
+      )
     },
   ];
 
   const aiColumns = [
     { title: '别名', dataIndex: 'name', key: 'name' },
     { title: '模型', dataIndex: 'model', key: 'model' },
-    { 
-      title: '操作', 
-      key: 'action', 
+    {
+      title: '操作',
+      key: 'action',
       render: (_, record) => (
         <Space>
           <Button icon={<CheckCircleOutlined />} onClick={() => handleTestAi(record.id)}>测试连接</Button>
+          <Button icon={<EditOutlined />} onClick={() => openEditModal('ai', record)}>编辑</Button>
           <Popconfirm title="确定删除？" onConfirm={() => handleDelete('ai', record.id)}>
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
-      ) 
+      )
     },
   ];
+
+  const giteaModalTitle = editingGitea ? '编辑 Gitea 配置' : '添加 Gitea 配置';
+  const notifyModalTitle = editingNotify ? '编辑通知配置' : '添加通知配置';
+  const aiModalTitle = editingAi ? '编辑 AI 配置' : '添加 AI 配置';
 
   const tabItems = [
     {
@@ -187,7 +248,7 @@ const ConfigPage = () => {
       label: 'Gitea 源配置',
       children: (
         <>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsGiteaModalOpen(true)} style={{ marginBottom: 16 }}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openAddModal('gitea')} style={{ marginBottom: 16 }}>
             添加 Gitea 源
           </Button>
           <Table dataSource={giteaConfigs} columns={giteaColumns} rowKey="id" loading={loading} />
@@ -199,7 +260,7 @@ const ConfigPage = () => {
       label: '通知渠道配置',
       children: (
         <>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsNotifyModalOpen(true)} style={{ marginBottom: 16 }}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openAddModal('notify')} style={{ marginBottom: 16 }}>
             添加通知渠道
           </Button>
           <Table dataSource={notifyConfigs} columns={notifyColumns} rowKey="id" loading={loading} />
@@ -211,7 +272,7 @@ const ConfigPage = () => {
       label: 'AI 总结配置',
       children: (
         <>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsAiModalOpen(true)} style={{ marginBottom: 16 }}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openAddModal('ai')} style={{ marginBottom: 16 }}>
             添加 AI 配置
           </Button>
           <Table dataSource={aiConfigs} columns={aiColumns} rowKey="id" loading={loading} />
@@ -224,10 +285,10 @@ const ConfigPage = () => {
     <div style={{ padding: 24 }}>
       <Tabs defaultActiveKey="1" items={tabItems} />
 
-      <Modal 
-        title="添加 Gitea 配置" 
-        open={isGiteaModalOpen} 
-        onCancel={() => setIsGiteaModalOpen(false)} 
+      <Modal
+        title={giteaModalTitle}
+        open={isGiteaModalOpen}
+        onCancel={() => { setIsGiteaModalOpen(false); setEditingGitea(null); giteaForm.resetFields(); }}
         onOk={() => giteaForm.submit()}
         confirmLoading={submitting}
         destroyOnClose
@@ -235,14 +296,14 @@ const ConfigPage = () => {
         <Form form={giteaForm} layout="vertical" onFinish={onAddGitea}>
           <Form.Item name="name" label="别名" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="base_url" label="Base URL" rules={[{ required: true }]}><Input placeholder="https://git.company.com" /></Form.Item>
-          <Form.Item name="token" label="Access Token" rules={[{ required: true }]}><Input.Password /></Form.Item>
+          <Form.Item name="token" label="Access Token" rules={[{ required: true }]}><Input.Password placeholder={editingGitea ? "留空不修改" : undefined} /></Form.Item>
         </Form>
       </Modal>
 
-      <Modal 
-        title="添加通知配置" 
-        open={isNotifyModalOpen} 
-        onCancel={() => setIsNotifyModalOpen(false)} 
+      <Modal
+        title={notifyModalTitle}
+        open={isNotifyModalOpen}
+        onCancel={() => { setIsNotifyModalOpen(false); setEditingNotify(null); notifyForm.resetFields(); }}
         onOk={() => notifyForm.submit()}
         confirmLoading={submitting}
         destroyOnClose
@@ -253,10 +314,10 @@ const ConfigPage = () => {
         </Form>
       </Modal>
 
-      <Modal 
-        title="添加 AI 配置" 
-        open={isAiModalOpen} 
-        onCancel={() => setIsAiModalOpen(false)} 
+      <Modal
+        title={aiModalTitle}
+        open={isAiModalOpen}
+        onCancel={() => { setIsAiModalOpen(false); setEditingAi(null); aiForm.resetFields(); }}
         onOk={() => aiForm.submit()}
         confirmLoading={submitting}
         destroyOnClose
@@ -264,7 +325,7 @@ const ConfigPage = () => {
         <Form form={aiForm} layout="vertical" onFinish={onAddAi} initialValues={{ api_base: 'https://api.openai.com/v1', model: 'gpt-3.5-turbo' }}>
           <Form.Item name="name" label="别名" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="api_base" label="API Base URL" rules={[{ required: true }]}><Input placeholder="https://api.openai.com/v1" /></Form.Item>
-          <Form.Item name="api_key" label="API Key" rules={[{ required: true }]}><Input.Password /></Form.Item>
+          <Form.Item name="api_key" label="API Key" rules={[{ required: true }]}><Input.Password placeholder={editingAi ? "留空不修改" : undefined} /></Form.Item>
           <Form.Item name="model" label="模型名称" rules={[{ required: true }]}><Input placeholder="gpt-3.5-turbo" /></Form.Item>
           <Form.Item name="system_prompt" label="系统提示词 (System Prompt)">
             <Input.TextArea placeholder="可选，留空使用默认总结提示词" rows={4} />

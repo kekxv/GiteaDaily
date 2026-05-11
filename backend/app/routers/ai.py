@@ -41,6 +41,19 @@ async def test_ai_connection(config_id: int, db: Session = Depends(get_db), curr
         return {"success": False, "error": result}
     return {"success": True, "response": result}
 
+@router.put("/{config_id}", response_model=AIConfigResponse)
+def update_ai_config(config_id: int, config: AIConfigCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    cfg = db.query(AIConfig).filter(AIConfig.id == config_id, AIConfig.user_id == current_user.id).first()
+    if not cfg:
+        raise HTTPException(status_code=404, detail="Config not found")
+    for key, value in config.dict().items():
+        if key == 'api_key' and not value:
+            continue  # Keep existing api_key if not changed
+        setattr(cfg, key, value)
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
 @router.delete("/{config_id}")
 def delete_ai_config(config_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cfg = db.query(AIConfig).filter(AIConfig.id == config_id, AIConfig.user_id == current_user.id).first()
