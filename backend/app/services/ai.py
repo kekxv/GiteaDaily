@@ -158,10 +158,7 @@ class AIService:
             return res_content
 
         except Exception as e:
-            import traceback
-
             import httpx
-            error_details = traceback.format_exc()
 
             # Special handling for common httpx errors to make them more readable
             error_msg = str(e)
