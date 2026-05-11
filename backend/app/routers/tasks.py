@@ -94,7 +94,7 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
                 data_by_repo[repo_name] = {"activities": [], "detailed_commits": []}
             data_by_repo[repo_name]["activities"].append(act)
 
-        markdown_report = gitea_service.generate_activity_report(since, data_by_repo, full_name)
+        markdown_report = gitea_service.generate_activity_report(since, until, task_data.report_days, data_by_repo, full_name)
     else:
         repos_to_check = []
         if task_data.scope_type in ["all", "owner"]:
@@ -125,7 +125,7 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
                     "prs": repo_prs
                 }
 
-        markdown_report = gitea_service.generate_markdown_report(since, data_by_repo)
+        markdown_report = gitea_service.generate_markdown_report(since, until, task_data.report_days, data_by_repo)
 
     # AI Summary in test run
     if task_data.is_ai_enabled and task_data.ai_config_id:
@@ -142,7 +142,8 @@ async def test_run_task(task_data: ReportTaskCreate, db: Session = Depends(get_d
                 api_key=ai_cfg.api_key,
                 model=ai_cfg.model,
                 content=markdown_report,
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
+                report_days=task_data.report_days
             )
             markdown_report = f"{ai_summary}\n\n{markdown_report}"
 

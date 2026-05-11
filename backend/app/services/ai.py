@@ -4,6 +4,7 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 from ..core.http_client import HttpClientManager
+from .gitea import get_report_type
 
 # 默认系统提示词 - 结构化日报格式（适配企业微信Markdown）
 DEFAULT_SUMMARY_PROMPT = """你是一个代码提交日报助手。
@@ -33,6 +34,34 @@ DEFAULT_SUMMARY_PROMPT = """你是一个代码提交日报助手。
 
 请保持简洁。合并相似提交，去除重复信息。使用中文。直接输出 Markdown 格式内容，不要有任何额外说明。"""
 
+# 默认系统提示词 - 结构化周报格式（整周视角）
+DEFAULT_WEEKLY_SUMMARY_PROMPT = """你是一个代码提交周报助手。
+请根据提供的 Git 提交记录，从整周视角总结本周的工作内容。
+
+## 企业微信 Markdown 语法限制
+
+支持的语法：标题（# 后必须有空格）、加粗 **bold**、链接、行内代码、引用 > 文字、颜色字体
+不支持的语法：列表（- 或 1.）、代码块、表格
+
+## 输出格式要求
+
+# 工作周报 (日期范围)
+
+**一句话摘要本周主要工作内容**
+
+## 项目名
+> <font color="info">新增</font> 功能描述
+> <font color="warning">修复</font> bug描述
+> 其他变更描述
+
+---
+
+本周共 X 个提交
+
+---
+
+请从整周视角归纳，合并相似的提交，去除重复信息。突出本周的主要进展和成果。使用中文。直接输出 Markdown 格式内容，不要有任何额外说明。"""
+
 
 class AIService:
     @staticmethod
@@ -41,10 +70,14 @@ class AIService:
         api_key: str,
         model: str,
         content: str,
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        report_days: int = 1
     ) -> str:
         if not system_prompt:
-            system_prompt = DEFAULT_SUMMARY_PROMPT
+            if get_report_type(report_days) == "weekly":
+                system_prompt = DEFAULT_WEEKLY_SUMMARY_PROMPT
+            else:
+                system_prompt = DEFAULT_SUMMARY_PROMPT
 
         # Use the official OpenAI SDK for better compatibility
         base_url = api_base.rstrip("/")

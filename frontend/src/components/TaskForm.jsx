@@ -260,13 +260,13 @@ const TaskForm = ({ initialValues, onSuccess, onCancel }) => {
         </Form.Item>
       </div>
 
-      <Form.Item name="report_days" label="统计时间范围" rules={[{ required: true }]}>
+      <Form.Item name="report_days" label="报告类型" rules={[{ required: true }]}>
         <Select>
-          <Option value={1}>过去 1 天 (默认)</Option>
-          <Option value={3}>过去 3 天</Option>
-          <Option value={7}>过去 7 天</Option>
-          <Option value={14}>过去 14 天</Option>
-          <Option value={30}>过去 30 天</Option>
+          <Option value={1}>日报 - 过去 1 天 (默认)</Option>
+          <Option value={3}>日报 - 过去 3 天</Option>
+          <Option value={7}>周报 - 过去 7 天</Option>
+          <Option value={14}>双周报 - 过去 14 天</Option>
+          <Option value={30}>月报 - 过去 30 天</Option>
         </Select>
       </Form.Item>
 

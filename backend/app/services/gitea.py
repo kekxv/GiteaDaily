@@ -5,6 +5,10 @@ from typing import Any, Dict, List
 from ..core.http_client import HttpClientManager
 
 
+def get_report_type(report_days: int) -> str:
+    return "weekly" if report_days >= 7 else "daily"
+
+
 class GiteaService:
     def __init__(self, base_url: str, token: str):
         self.base_url = base_url.rstrip("/")
@@ -141,9 +145,14 @@ class GiteaService:
         return prs
 
     @staticmethod
-    def generate_markdown_report(report_date: datetime, data_by_repo: Dict[str, Dict[str, Any]]) -> str:
-        date_str = report_date.strftime("%Y-%m-%d")
-        report = f"### 🚀 代码提交与任务日报 ({date_str})\n\n"
+    def generate_markdown_report(since: datetime, until: datetime, report_days: int, data_by_repo: Dict[str, Dict[str, Any]]) -> str:
+        report_type = get_report_type(report_days)
+        if report_type == "weekly":
+            date_str = f"{since.strftime('%Y-%m-%d')} ~ {until.strftime('%Y-%m-%d')}"
+            report = f"### 🚀 代码提交与任务周报 ({date_str})\n\n"
+        else:
+            date_str = since.strftime("%Y-%m-%d")
+            report = f"### 🚀 代码提交与任务日报 ({date_str})\n\n"
 
         has_content = False
         for repo, data in data_by_repo.items():
@@ -178,14 +187,22 @@ class GiteaService:
             report += "此时间段内无活跃记录。"
         else:
             total_commits = sum(len(d.get("commits", [])) for d in data_by_repo.values())
-            report += f"---\n**活跃概览: {total_commits} 提交**"
+            if report_type == "weekly":
+                report += f"---\n**本周活跃概览: {total_commits} 个提交**"
+            else:
+                report += f"---\n**活跃概览: {total_commits} 提交**"
 
         return report
 
     @staticmethod
-    def generate_activity_report(report_date: datetime, data_by_repo: Dict[str, Dict[str, Any]], user_full_name: str) -> str:
-        date_str = report_date.strftime("%Y-%m-%d")
-        report = f"### 📝 {user_full_name} 的个人活动轨迹 ({date_str})\n\n"
+    def generate_activity_report(since: datetime, until: datetime, report_days: int, data_by_repo: Dict[str, Dict[str, Any]], user_full_name: str) -> str:
+        report_type = get_report_type(report_days)
+        if report_type == "weekly":
+            date_str = f"{since.strftime('%Y-%m-%d')} ~ {until.strftime('%Y-%m-%d')}"
+            report = f"### 📝 {user_full_name} 的个人活动周报 ({date_str})\n\n"
+        else:
+            date_str = since.strftime("%Y-%m-%d")
+            report = f"### 📝 {user_full_name} 的个人活动日报 ({date_str})\n\n"
 
         if not data_by_repo:
             report += "此时间段内无活动轨迹。"

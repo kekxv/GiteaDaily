@@ -142,7 +142,7 @@ class SchedulerService:
                             repo_data["detailed_commits"] = my_commits
                             total_commits += len(my_commits)
 
-                    markdown_report = gitea_service.generate_activity_report(since, data_by_repo, full_name)
+                    markdown_report = gitea_service.generate_activity_report(since, until, task.report_days, data_by_repo, full_name)
                 else:
                     # ... existing repos logic ...
                     # (I will wrap this part to store in raw_data_obj as well)
@@ -176,7 +176,7 @@ class SchedulerService:
                             total_commits += len(repo_commits)
 
                     raw_data_obj["repo_data"] = data_by_repo
-                    markdown_report = gitea_service.generate_markdown_report(since, data_by_repo)
+                    markdown_report = gitea_service.generate_markdown_report(since, until, task.report_days, data_by_repo)
 
                 if task.is_ai_enabled and task.ai_config:
                     ai_cfg = task.ai_config
@@ -186,7 +186,8 @@ class SchedulerService:
                         api_key=ai_cfg.api_key,
                         model=ai_cfg.model,
                         content=markdown_report,
-                        system_prompt=system_prompt
+                        system_prompt=system_prompt,
+                        report_days=task.report_days
                     )
                     markdown_report = ai_summary  # 只使用AI整理后的内容
 
