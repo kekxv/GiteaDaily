@@ -189,9 +189,9 @@ class SchedulerService:
                         system_prompt=system_prompt,
                         report_days=task.report_days
                     )
-                    if ai_summary:
+                    if ai_summary and not ai_summary.startswith("⚠️") and not ai_summary.startswith("AI 总结出错"):
                         markdown_report = ai_summary  # AI 整理成功，使用总结内容
-                    # 否则保留原始报告（截断或出错时回退）
+                    # 否则保留原始报告（截断/出错/空内容时回退）
 
                 success = await WebhookService.send_wecom_markdown(notify_cfg.webhook_url, markdown_report)
 
