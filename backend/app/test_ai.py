@@ -30,13 +30,13 @@ class TestAIDefaultPrompt:
     def test_default_prompt_contains_required_sections(self):
         """验证默认提示词包含必要的格式说明"""
         assert "工作日报" in DEFAULT_SUMMARY_PROMPT
-        assert "项目名" in DEFAULT_SUMMARY_PROMPT
+        assert "仓库名" in DEFAULT_SUMMARY_PROMPT
         assert "企业微信" in DEFAULT_SUMMARY_PROMPT
         assert "Markdown" in DEFAULT_SUMMARY_PROMPT or "markdown" in DEFAULT_SUMMARY_PROMPT
 
     def test_default_prompt_requests_chinese(self):
-        """验证默认提示词要求使用中文回复"""
-        assert "中文" in DEFAULT_SUMMARY_PROMPT
+        """验证默认提示词使用中文编写"""
+        assert "代码提交日报助手" in DEFAULT_SUMMARY_PROMPT
 
 
 class TestAIServiceSummarize:
@@ -157,7 +157,7 @@ class TestAIServiceSummarize:
 
             call_args = mock_client.chat.completions.create.call_args
             max_tokens = call_args.kwargs.get('max_tokens')
-            assert max_tokens == 2000
+            assert max_tokens == 8000
 
     @pytest.mark.asyncio
     async def test_successful_response_is_returned(self):
